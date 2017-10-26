@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>Shapes Mania</title> 
+<link type="text/css" rel="stylesheet" href="css/main.css" />
+
+<meta charset="utf-8">
+<meta name="keywords" content="puzzles, puzzle games, free, online games, free games, free online games, free puzzle games">
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+</head>
+<body>
+<div class="container">
+
+ <h2 class="title_sm"><span class="red">V</span><span class="green">a</span><span class="orange">s<span class="blue">a</span><span class="red">r</span><span class="green">e</span><span class="orange">l<span class="blue">y</span></h2>
+ <h3>Move circles</h3>
+
+<table class="heading">
+  <tbody>
+     <tr>
+      <td><button id="restart-button" onclick="StartGame()" type ="button">New Game</button></td>	  
+	  <td id="score_td">
+        <div id="score-container">0</div>
+        <div id="best-container">0</div>
+      </td>      
+    </tr>
+</tbody>
+</table>
+<div id="canvasContainer"><canvas id="myCanvas" width="500" height="500" ></canvas>
+ <div class="game-message">
+        <div><p></p></div>
+        <div class="lower">
+	        <button id ="keep-playing-button" onClick="ContinueGame()" >Continue</button>
+            <button id ="retry-button" onclick="StartGame()">Try again</button>
+			
+      </div>
+</div>
+</div>
+<p class="game-explanation"><b>HOW TO PLAY:</b> Move horizontal and vertical rows of circles.  When a circle color matches a cell, it stays.  Unmatched circles jump over matched stuck circles while moving.  The goal is to match most circles to cells.</p>
+<div id="bottom">© Shapes Mania</div>
+
+</div>
+
+<script src="cordova.js"></script>
+<script src="js/vasarely.js"></script>
+ </body>
+</html>
