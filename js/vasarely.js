@@ -5,7 +5,13 @@
 	  var colorsArr=[colors.pink,colors.pink,colors.pink,colors.black, colors.black, colors.ivory1, colors.ivory1, colors.ivory1, colors.red_light, colors.red_light,
 	                 colors.blue1, colors.blue1, colors.blue1, colors.blue2, colors.blue2, colors.blue2, colors.sea, colors.sea, colors.brown, colors.brown, 
 					 colors.violet1, colors.violet1, colors.violet1, colors.ivory3, colors.ivory3, colors.violet_light, colors.violet_light, colors.violet_light, colors.blue3,  colors.blue3,
-					 colors.ivory2, colors.ivory2, colors.blue4, colors.blue4, colors.red1, colors.red1];			 
+					 colors.ivory2, colors.ivory2, colors.blue4, colors.blue4, colors.red1, colors.red1];	
+					 
+	  var CellFilledSound = new sound("sounds/menu-button-click-switch-01.mp3");
+	  var CmopletedAllSound = new sound("sounds/correct-answer-bell-gliss-04.mp3");
+	  var EndOfGameSound = new sound("sounds/correct-answer-bell-gliss-01.mp3");	
+	  var PlaySounds=false;
+	  
 	  var score=0;
 	  var moves_score=0;
 	  var Quadr;
@@ -19,8 +25,6 @@
 	  var moves_num=10;
 	  var count_moves=0;
 	  var timer;
-	  var count;
-	  var delta;
 	  
       var best=window.localStorage.getItem("best-vasarely");
 	  if(!best)
@@ -31,6 +35,7 @@
 
 	  var table=CreateTable();
 	  var shapes_in= CreateShapes();
+	  var FixedArr=new Array();
 	  
 	  StartGame();
       
@@ -84,7 +89,7 @@ function Init()
 	  
 	var ColorsUsed=new Array(colorsArr.length);
 	var found=false;  
-	for(loop=0; loop <10 && found==false; loop++)
+	for(loop=0; loop <12 && found==false; loop++)
 	{
 	    for (var i=0; i<ColorsUsed.length; i++)
 		  ColorsUsed[i]=0;
@@ -110,7 +115,7 @@ function Init()
 		  }
 	}
 	var found=false;  
-	for(loop=0; loop <8 && found==false; loop++)
+	for(loop=0; loop <10 && found==false; loop++)
 	{
 	for (var i=0; i<ColorsUsed.length; i++)
 		  ColorsUsed[i]=0;
@@ -301,16 +306,10 @@ function mouseDownListener(evt) {
 
 function onTimerTick()
 {
-	if(count_moves==moves_num)
-	{
-		count_moves=0;
-		clearInterval(timer);
-		Move(direction,rc);
-		direction=null;
-		rc=-1;
-		draw();
-		return;
-	}
+
+if(count_moves==moves_num)
+	   Move(direction,rc);   
+	
 	for( var i=0; i<cells; i++ )
 	{
 	   if( (direction=="right" || direction=="left") && i!= rc)
@@ -324,24 +323,114 @@ function onTimerTick()
 			 var size=canvas.width/cells;
 			 if (direction=="right" || direction=="left")
 			 {
-				if(count_moves===0)			 
+				if(count_moves===0 || count_moves===moves_num)			 
 					shapes_in[i][j].ct_x=(j+.5)*size;
-				else
-				    shapes_in[i][j].ct_x+=delta;
+			 
+				if(count_moves===0)
+				{
+					var distance=1;
+					for(var n=1; n<cells; n++)
+					{
+						var j1=direction=="right"? (j+n)%cells : (j-n+cells)%cells;
+						if(shapes_in[i][j1].fixed==true)
+						    distance++;
+						else
+							break;
+					}
+					var sign=direction=="right"?1:-1;
+					shapes_in[i][j].x_delta=sign*size*distance/moves_num;                   				
+				}
+				else if(count_moves < moves_num)
+				    shapes_in[i][j].ct_x+=shapes_in[i][j].x_delta;
+			                            
 			 }
-			 else if (j===rc && (direction=="up" || direction=="down"))
+			 
+			 else if (direction=="up" || direction=="down")
              {
 				 
-				if(count_moves===0)			 
+				if(count_moves===0 || count_moves===moves_num)			 
 					shapes_in[i][j].ct_y=(i+.5)*size;
-				else
-				    shapes_in[i][j].ct_y+=delta;
+				if(count_moves===0)
+				{
+					var distance=1;
+					for(var n=1; n<cells; n++)
+					{
+						var i1=direction=="down"? (i+n)%cells : (i-n+cells)%cells;
+						if(shapes_in[i1][j].fixed==true)
+						    distance++;
+						else
+							break;
+					}
+					var sign=direction=="down"?1:-1;
+					shapes_in[i][j].y_delta=sign*size*distance/moves_num;                   				
+				}
+				else if(count_moves < moves_num)
+				    shapes_in[i][j].ct_y+=shapes_in[i][j].y_delta;
+			
 			 }
 		}
 	}
+	draw();
+	if(count_moves==moves_num)
+	{
+		count_moves=0;
+		clearInterval(timer);
+		direction=null;
+		rc=-1;
+		if(FixedArr.length)
+		{
+			var size=canvas.width/cells;
+		 	for (var i=0; i<FixedArr.length-1;i+=2)
+			{
+				shapes_in[FixedArr[i]][FixedArr[i+1]].fixed=true;
+		        ctx.beginPath();
+				if(shapes_in[FixedArr[i]][FixedArr[i+1]].clr==="black")
+					ctx.strokeStyle="white";
+				else
+					ctx.strokeStyle="black";
+		        ctx.lineWidth=1;
+		        ctx.moveTo( FixedArr[i+1]*size,    FixedArr[i]*size);
+                ctx.lineTo((FixedArr[i+1]+1)*size,(FixedArr[i]+1)*size);
+				ctx.moveTo((FixedArr[i+1]+1)*size, FixedArr[i]*size);
+                ctx.lineTo( FixedArr[i+1]*size,   (FixedArr[i]+1)*size);
+		        ctx.stroke();
+			}
+			score+=FixedArr.length/2;
+			document.getElementById('score-container').innerHTML=score;
+	 
+	        if(score > best)
+	        {
+	            best=score;
+	            document.getElementById('best-container').innerHTML= best;
+	            window.localStorage.setItem("best-vasarely", best)
+	        }
+			if(EndOfGame()==true)
+			{
+				messageContainer = document.querySelector(".game-message");
+				messageContainer.classList.add("game-over");
+				var mes;
+				if(score==36)
+				{
+					CmopletedAllSound.play();
+					mes="Congratulation! You finished with " + moves_score +" moves";
+				}
+				else
+				{
+					mes="Out of moves"
+					EndOfGameSound.play();
+				}
+				messageContainer.getElementsByTagName("p")[0].textContent =mes;
+//				ShareScore();
+			} 
+            else
+				CellFilledSound.play();
+		    setTimeout(draw, 800);	
+		}
+		return;
+	}
 	count_moves++;
-	draw();	
 }
+
 	
 function Move (direction, rc)   // rc- row or colomn
 {
@@ -349,7 +438,9 @@ function Move (direction, rc)   // rc- row or colomn
 	var shapes_cp =[cells];
     for (var i=0; i<cells; i++)  
 	  shapes_cp[i]=[cells];
-  
+    for (var i=FixedArr.length;i>0; i--)
+      FixedArr.pop();
+	console.log(FixedArr);
 	for( var i=0; i<cells; i++ )
 		   for( var j=0; j<cells; j++ )
 		   {
@@ -358,7 +449,6 @@ function Move (direction, rc)   // rc- row or colomn
 			   shapes_cp[i][j].fixed=shapes_in[i][j].fixed;
            }
 
- 
     for( var i=0; i<cells; i++ )
 	{
 		if( (direction=="right" || direction=="left") && i!= rc)
@@ -399,29 +489,8 @@ function Move (direction, rc)   // rc- row or colomn
 
 			 if( shapes_in[i][j].clr==table[i][j].clr)
 			 {
-				 shapes_in[i][j].fixed=true;
-				 score++;
-				 document.getElementById('score-container').innerHTML=score;
-	 
-	             if(score > best)
-	             {
-	               best=score;
-	               document.getElementById('best-container').innerHTML= best;
-	              window.localStorage.setItem("best-vasarely", best)
-	             }
-				 
-				if(EndOfGame()==true)
-				{
-					messageContainer = document.querySelector(".game-message");
-					messageContainer.classList.add("game-over");
-					var mes;
-					if(score==36)
-						mes="Congratulation! You finished with " + moves_score +" moves";
-					else
-						mes="Out of moves"
-					messageContainer.getElementsByTagName("p")[0].textContent =mes;
-//					ShareScore();
-				} 
+				 FixedArr.push(i);
+				 FixedArr.push(j);
 		     }
 		}
 
@@ -521,4 +590,48 @@ function RemoveMessage()
       messageContainer.classList.remove("game-continue");  
 		
 }
+
+function ActivateSounds()
+{
+	CellFilledSound.play();
+	CellFilledSound.stop();
+	CmopletedAllSound.play();
+	CmopletedAllSound.stop();
+	EndOfGameSound.play();
+	EndOfGameSound.stop();
+}
+
+function ToggleSound()
+{
+	PlaySounds=!PlaySounds;
+	if(PlaySounds)
+	{
+		ActivateSounds();
+		document.getElementById("sound-button").src="res/sound_mute.png";
+	}
+	else
+		document.getElementById("sound-button").src="res/sound.png";
+}
+
+function sound(src)
+{
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+		if(PlaySounds)
+		{
+		  this.sound.pause();
+          this.sound.currentTime = 0;
+          this.sound.play();
+		}
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }
+}
+
 	
